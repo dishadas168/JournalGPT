@@ -45,8 +45,7 @@ class Database:
             "first_seen": datetime.now(),
 
             "current_dialog_id": None,
-            "current_chat_mode": "assistant",
-            "current_model": config.models["available_text_models"][0],
+            "current_chat_mode": "write_journal",
 
             "n_used_tokens": {},
 
@@ -66,7 +65,6 @@ class Database:
             "user_id": user_id,
             "chat_mode": self.get_user_attribute(user_id, "current_chat_mode"),
             "start_time": datetime.now(),
-            "model": self.get_user_attribute(user_id, "current_model"),
             "messages": []
         }
 
@@ -130,7 +128,7 @@ class Database:
 
     def add_new_entry(
         self,
-        entry_id: int,
+        user_id: str = "",
         #TODO: SET RIGHT TYPE OF FORMAT FOR DATE
         start_time: str = "",
         end_time: str = "",
@@ -138,10 +136,11 @@ class Database:
         summary: str = "",
         title: str = "",
         dialog_id: str = "",
-        isEmbedded: bool = False
+        is_embedded: bool = False
     ):
         entry_id= str(uuid.uuid4())
         entry_dict = {
+            "user_id": user_id,
             "_id": entry_id,
             "start_time": start_time,
             "end_time": end_time,
@@ -149,11 +148,20 @@ class Database:
             "summary": summary,
             "title": title,
             "dialog_id": dialog_id,
-            "isEmbedded": isEmbedded
+            "is_embedded": is_embedded
         }
 
         self.entry_collection.insert_one(entry_dict)
         return entry_id
+
+    #TODO: there are likely multiple entries for the user_id, dialog_id pair. 
+    def get_entry(self, user_id: str = "", dialog_id: str = "", is_embedded: bool = False):
+        entry = self.entry_collection.find_one({"dialog_id": dialog_id, "user_id": user_id, "is_embedded":is_embedded})
+        return entry
+
+    #TODO: Add check if entry exists at all
+    def set_entry_attribute(self, entry_id: str, key: str, value: Any):
+        self.entry_collection.update_one({"_id": entry_id}, {"$set": {key: value}})
 
 #TODO: Write a function to retreive all entries from entry catalogue
 

@@ -1,0 +1,8 @@
+python-telegram-bot[rate-limiter]==20.1
+pymongo==4.3.3
+python-dotenv==1.0.0
+openai>=0.27.0
+langchain==0.0.278
+pinecone-client[grpc]==2.2.2
+tiktoken>=0.3.0
+pandas==2.0.3

@@ -4,11 +4,11 @@ import config
 
 # setup openai
 openai.api_key = config.openai_api_key
-if config.openai_api_base is not None:
-    openai.api_base = config.openai_api_base
+# if config.openai_api_base is not None:
+#     openai.api_base = config.openai_api_base
 
 OPENAI_COMPLETION_OPTIONS = {
-    "temperature": 0.7,
+    "temperature": 0.0,
     "max_tokens": 1000,
     "top_p": 1,
     "frequency_penalty": 0,
@@ -33,8 +33,7 @@ class GPT:
     def generate_prompt_messages(self, prompt):
         messages = [{"role": "system", "content": prompt}]
         for dialog_message in self.dialog_messages:
-            messages.append({"role": "user", "content": dialog_message["user"]})
-            messages.append({"role": "assistant", "content": dialog_message["bot"]})
+            messages.append({"role": dialog_message["role"], "content": dialog_message["content"]})
         return messages
 
     # def send_message(self, message, dialog_messages=[], chat_mode="assistant", is_url = False):
