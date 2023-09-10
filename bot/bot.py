@@ -40,6 +40,27 @@ async def register_user_if_not_exists(update: Update, context: CallbackContext, 
     if db.get_user_attribute(user.id, "current_dialog_id") is None:
         db.start_new_dialog(user.id)
 
+async def start(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update, context, update.message.from_user)
+    user_id = update.message.from_user.id
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+    dialog_id = db.get_user_attribute(user_id, "current_dialog_id")
+
+    reply_message="Welcome to JournalGPT! This bot is designed to help you with your journal entries.\n"\
+    "Start writing journals everyday with the help of entry prompts.\n"\
+    "Get a summary of your entry.\n"\
+    "Chat with your saved journals.\n"\
+    "Use the following commands from the menu:\n\n"\
+
+    "/write_journal: Start writing a new journal entry.\n"\
+    "/show_summary: Get a summary with title of the most recent journal conversation.\n"\
+    "/save_entry: Save the summary.\n"\
+    "/ask_questions: Chat with your past self!"
+
+    await update.message.reply_text(reply_message, parse_mode=ParseMode.HTML)
+
+
+
 async def save_entry(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update, context, update.message.from_user)
     user_id = update.message.from_user.id
@@ -213,6 +234,7 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
 #TODO: add a command for /start
 async def post_init(application: Application):
     await application.bot.set_my_commands([
+        BotCommand("/start", "Introduction"),
         BotCommand("/write_journal", "Start writing a new journal entry"),
         BotCommand("/show_summary", "Show the summary and save the entry"),
         BotCommand("/save_entry", "Save the entry to database"),
@@ -233,6 +255,7 @@ def run_bot() -> None:
 
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND & filters.ALL, message_handle))
 
+    application.add_handler(CommandHandler("start", start, filters=filters.ALL))
     application.add_handler(CommandHandler("write_journal", write_journal, filters=filters.ALL))
     application.add_handler(CommandHandler("show_summary", show_summary, filters=filters.ALL))
     application.add_handler(CommandHandler("save_entry", save_entry, filters=filters.ALL))
