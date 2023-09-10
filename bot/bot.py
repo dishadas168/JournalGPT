@@ -46,8 +46,8 @@ async def save_entry(update: Update, context: CallbackContext):
     db.set_user_attribute(user_id, "last_interaction", datetime.now())
     dialog_id = db.get_user_attribute(user_id, "current_dialog_id")
     entry = db.get_entry(user_id, dialog_id)
-    index = Index("journalgpt-index", user_id, entry)
-    result = index.push_to_index()
+    index = Index("journalgpt-index", user_id)
+    result = index.push_to_index(entry)
     if result:
         db.set_entry_attribute(entry["_id"], "is_embedded", True)
 
@@ -83,13 +83,27 @@ async def write_journal(update: Update, context: CallbackContext):
     )
     await update.message.reply_text(reply_message, parse_mode=ParseMode.HTML)
 
+async def ask_questions(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update, context, update.message.from_user)
+    user_id = update.message.from_user.id
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+    db.set_user_attribute(user_id, "current_chat_mode", "ask_questions")
+    db.start_new_dialog(user_id)
 
+    reply_message="Welcome! You can now chat with your past self. What would you like to ask your past self?"
+
+    await update.message.reply_text(reply_message, parse_mode=ParseMode.HTML)
 
 async def message_handle(update: Update, context: CallbackContext, message=None, use_new_dialog_timeout=True):
     _message = message or update.message.text
     await register_user_if_not_exists(update, context, update.message.from_user)
     user_id = update.message.from_user.id
     chat_mode = db.get_user_attribute(user_id, "current_chat_mode")
+
+    #TODO: Put modes in different functions
+    if chat_mode=="ask_questions":
+        index = Index("journalgpt-index", user_id)
+        reply_text= index.get_answer(_message, user_id)
 
     if chat_mode=="write_journal":
         #TODO: Put the prompt in a template file
@@ -119,7 +133,7 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
 
     await update.message.chat.send_action(action="typing")
     #TODO: TESTING
-    await update.message.reply_text([message["content"] for message in updated_dialog_message], parse_mode=ParseMode.HTML)
+    # await update.message.reply_text([message["content"] for message in updated_dialog_message], parse_mode=ParseMode.HTML)
     await update.message.reply_text(reply_text, parse_mode=ParseMode.HTML)
 
     # async def message_handle_fn():
@@ -196,12 +210,13 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
     #         await update.message.reply_text(error_text)
     #         return
 
-
+#TODO: add a command for /start
 async def post_init(application: Application):
     await application.bot.set_my_commands([
         BotCommand("/write_journal", "Start writing a new journal entry"),
         BotCommand("/show_summary", "Show the summary and save the entry"),
-        BotCommand("/save_entry", "Save the entry to database")
+        BotCommand("/save_entry", "Save the entry to database"),
+        BotCommand("/ask_questions", "Chat with your journal entries")
     ])
 
 def run_bot() -> None:
@@ -221,6 +236,7 @@ def run_bot() -> None:
     application.add_handler(CommandHandler("write_journal", write_journal, filters=filters.ALL))
     application.add_handler(CommandHandler("show_summary", show_summary, filters=filters.ALL))
     application.add_handler(CommandHandler("save_entry", save_entry, filters=filters.ALL))
+    application.add_handler(CommandHandler("ask_questions", ask_questions, filters=filters.ALL))
 
 
     # start the bot

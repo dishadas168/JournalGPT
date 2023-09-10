@@ -1,5 +1,8 @@
 import pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.chat_models import ChatOpenAI
+from langchain.chains.conversation.memory import ConversationBufferWindowMemory
+from langchain.chains import RetrievalQA
 from langchain.vectorstores import Pinecone
 import config
 import pandas as pd
@@ -7,17 +10,6 @@ from uuid import uuid4
 import utils
 import time
 
-#Responds to /save entry command
-
-#1. Gets the current dialog id of user
-#2. Searches entry catalogue for an entry with same dialogue_id and isEmbedded=False
-#3. Extract the summary and title
-#4. Send to Pinecone
-
-#Responds to /QA command
-
-#1. User asks a question about the DB
-#2. Gets a response using RetrieverQA
 
 pinecone.init(
     api_key=config.pinecone_api_key,
@@ -25,7 +17,7 @@ pinecone.init(
 )
 
 class Index:
-    def __init__(self, index_name: str, user_id: str, entry: dict):
+    def __init__(self, index_name: str, user_id: str):
         self.index_name = index_name
         self.user_id = user_id
         self.embedding_model_name='text-embedding-ada-002'
@@ -38,10 +30,39 @@ class Index:
         self.vectorstore = Pinecone(
             self.index, self.embed.embed_query, self.text_field
         )
+        self.entry_summary=""
+        self.entry_title=""
+    
+    #TODO: Get this function into openai_utils when converting everything to langchain
+    def get_answer(self, message, user_id):
+        # chat completion llm
+        llm = ChatOpenAI(
+            openai_api_key=config.openai_api_key ,
+            model_name='gpt-3.5-turbo',
+            temperature=0.3
+        )
+        # conversational memory
+        conversational_memory = ConversationBufferWindowMemory(
+            memory_key='chat_history',
+            k=5,
+            return_messages=True
+        )
+        # retrieval qa chain
+        qa = RetrievalQA.from_chain_type(
+            llm=llm,
+            chain_type="stuff",
+            retriever=self.vectorstore.as_retriever()
+        )
+        qa.retriever.search_kwargs = {
+            "filter": {"user_id": {"$eq": user_id}}
+        }
+        answer = qa.run(message)
+        return answer
+    
+    def push_to_index(self, entry: dict):
+
         self.entry_summary=entry["summary"]["choices"][0]["message"]["content"]
         self.entry_title=entry["title"]["choices"][0]["message"]["content"]
-    
-    def push_to_index(self):
 
         vector_count_old=self.index.describe_index_stats()["total_vector_count"]
 
