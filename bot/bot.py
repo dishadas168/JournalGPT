@@ -109,7 +109,6 @@ async def ask_questions(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     db.set_user_attribute(user_id, "last_interaction", datetime.now())
     db.set_user_attribute(user_id, "current_chat_mode", "ask_questions")
-    db.start_new_dialog(user_id)
 
     reply_message="Welcome! You can now chat with your past self. What would you like to ask your past self?"
 
