@@ -1,5 +1,4 @@
 # JournalGPT
-# Journal Entry Assistant
 
 ![Streamlit Version](https://img.shields.io/badge/Streamlit-1.27.2-brightgreen)
 ![Neo4J Version](https://img.shields.io/badge/Neo4J-5.0-brightgreen)
@@ -7,9 +6,12 @@
 ![OpenAI GPT-3.5](https://img.shields.io/badge/OpenAI%20GPT-3.5-brightgreen)
 ![MongoDB Atlas](https://img.shields.io/badge/MongoDB%20Atlas-6.0-brightgreen)
 
-Welcome to the Journal Entry Assistant, a powerful, multi-page Streamlit application that harnesses the capabilities of several cutting-edge technologies to revolutionize the way users write journal entries, ask questions about their journals, and interactively create journal entries.
+Welcome to the JournalGPT, a powerful, multi-page Streamlit application that harnesses the capabilities of several cutting-edge technologies to revolutionize the way users write journal entries, ask questions about their journals, and interactively create journal entries.
 
 The ultimate goal of this application is to serve as a self-improvement journal that can assist users in detecting debilitating thought patterns, weaknesses, procrastination patterns etc and provide necessary resources for improving overall well-being.
+
+![Architecture](./resources/journal_gpt_architecture.jpg)
+
 
 ## Overview
 
@@ -31,7 +33,7 @@ In the second page, users can ask questions related to the contents of their upl
 
 - **Vector Database Query**: The identified context words are sent to Pinecone for an efficient vector search. This step retrieves the necessary context for answering the user's question.
 
-- **AI-Powered Answering**: The retrieved context is provided to an Large Language Model (in this case, OpenAI GPT-3) along with a suitable prompt. This ensures that the application delivers accurate and meaningful responses to the user's questions.
+- **LLM-Powered Answering**: The retrieved context is provided to an Large Language Model (in this case, OpenAI GPT-3.5) along with a suitable prompt. This ensures that the application delivers accurate and meaningful responses to the user's questions.
 
 ### Page 3: Interactive Journal Entry Creation
 
